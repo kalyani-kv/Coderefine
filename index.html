@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CodeRefine AI Hub 🤖</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col">
+
+<script>
+    const currentUser = localStorage.getItem('currentUser');
+    if(!currentUser){
+        alert("❌ Please login first!");
+        window.location.href = 'auth.html';
+    }
+</script>
+
+<header class="bg-slate-800 p-4 flex justify-between items-center shadow">
+    <h1 class="text-3xl font-bold">🤖 CodeRefine AI Hub</h1>
+    <div class="flex items-center gap-4">
+        <span class="text-slate-300">👤 <strong id="userEmail"></strong></span>
+        <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded font-semibold">
+            Logout
+        </button>
+    </div>
+</header>
+
+<main class="flex-1 p-6 space-y-6">
+    <div class="grid md:grid-cols-2 gap-6">
+        <!-- Input Panel -->
+        <div class="bg-slate-800 p-6 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-xl font-bold mb-2">Your Code / Input</h2>
+
+            <div class="flex gap-3 items-center">
+                <!-- Language -->
+                <div class="flex-1">
+                    <label class="block mb-1 font-semibold">Language</label>
+                    <select id="language" class="w-full p-2 rounded bg-slate-700 border border-slate-600">
+                        <option>Python</option>
+                        <option>Java</option>
+                        <option>C++</option>
+                        <option>JavaScript</option>
+                    </select>
+                </div>
+
+                <!-- Speech Input -->
+                <button id="speechBtn" class="bg-purple-600 hover:bg-purple-700 p-2 rounded font-semibold">
+                    <i class="fa-solid fa-microphone"></i> Speak
+                </button>
+            </div>
+
+            <!-- Focus Areas -->
+            <div>
+                <label class="block mb-1 font-semibold">Focus Areas</label>
+                <div class="flex gap-3 flex-wrap">
+                    <label class="flex items-center gap-1"><input type="checkbox" value="Bugs" class="focusCheck"> Bugs</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="Security" class="focusCheck"> Security</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="Performance" class="focusCheck"> Performance</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" value="Best Practices" class="focusCheck"> Best Practices</label>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <textarea id="inputArea" placeholder="Paste your code or text here..." 
+                class="w-full h-64 p-4 rounded bg-slate-900 border border-slate-600 font-mono"></textarea>
+
+            <!-- Feature Buttons -->
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button class="featureBtn bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold" data-feature="review">
+                    <i class="fa-solid fa-magnifying-glass"></i> Review Code
+                </button>
+                <button class="featureBtn bg-green-600 hover:bg-green-700 p-2 rounded font-semibold" data-feature="rewrite">
+                    <i class="fa-solid fa-pen-to-square"></i> Fix & Rewrite
+                </button>
+                <button class="featureBtn bg-indigo-600 hover:bg-indigo-700 p-2 rounded font-semibold" data-feature="text">
+                    <i class="fa-solid fa-file-lines"></i> Text Generation
+                </button>
+                <button class="featureBtn bg-purple-600 hover:bg-purple-700 p-2 rounded font-semibold" data-feature="codegen">
+                    <i class="fa-solid fa-code"></i> Code Generation
+                </button>
+                <button class="featureBtn bg-orange-600 hover:bg-orange-700 p-2 rounded font-semibold" data-feature="debug">
+                    <i class="fa-solid fa-bug"></i> Debug & Errors
+                </button>
+                <button class="featureBtn bg-teal-600 hover:bg-teal-700 p-2 rounded font-semibold" data-feature="summarize">
+                    <i class="fa-solid fa-file-alt"></i> Summarization
+                </button>
+                <button class="featureBtn bg-pink-600 hover:bg-pink-700 p-2 rounded font-semibold" data-feature="translate">
+                    <i class="fa-solid fa-language"></i> Translate
+                </button>
+                <button class="featureBtn bg-yellow-600 hover:bg-yellow-700 p-2 rounded font-semibold" data-feature="qa">
+                    <i class="fa-solid fa-question"></i> Q&A
+                </button>
+                <button class="featureBtn bg-gray-600 hover:bg-gray-700 p-2 rounded font-semibold" data-feature="sentiment">
+                    <i class="fa-solid fa-face-smile"></i> Sentiment
+                </button>
+                <button class="featureBtn bg-cyan-600 hover:bg-cyan-700 p-2 rounded font-semibold" data-feature="recommend">
+                    <i class="fa-solid fa-star"></i> Recommendation
+                </button>
+                <button class="featureBtn bg-rose-600 hover:bg-rose-700 p-2 rounded font-semibold" data-feature="multimodal">
+                    <i class="fa-solid fa-brain"></i> Multimodal
+                </button>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="bg-slate-800 p-6 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-xl font-bold mb-2">Output / Results</h2>
+            <div class="flex gap-2 mb-2">
+                <button onclick="copyText('output')" class="bg-yellow-500 px-3 py-1 rounded text-black">
+                    <i class="fa-regular fa-copy"></i> Copy
+                </button>
+                <button onclick="exportText('output','output.txt')" class="bg-purple-500 px-3 py-1 rounded">
+                    <i class="fa-solid fa-download"></i> Download TXT
+                </button>
+                <button onclick="exportPDF('output')" class="bg-green-500 px-3 py-1 rounded text-black">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                </button>
+            </div>
+            <pre><code id="output" class="output-box language-python"></code></pre>
+        </div>
+    </div>
+</main>
+
+<script>
+document.getElementById('userEmail').innerText = currentUser;
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'auth.html';
+});
+
+// Copy text
+function copyText(id) {
+    const text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text);
+    alert("Copied!");
+}
+
+// Download TXT
+function exportText(id, filename) {
+    const text = document.getElementById(id).innerText;
+    const blob = new Blob([text], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+
+// Download PDF via backend
+function exportPDF(id){
+    const content = document.getElementById(id).innerText;
+    fetch('http://127.0.0.1:5000/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+    })
+    .then(res => res.blob())
+    .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'output.pdf';
+        link.click();
+    });
+}
+
+// Feature buttons
+const featureButtons = document.querySelectorAll('.featureBtn');
+featureButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const feature = btn.dataset.feature;
+        const code = document.getElementById('inputArea').value.trim();
+        const language = document.getElementById('language').value;
+        const focus = Array.from(document.querySelectorAll('.focusCheck:checked')).map(f => f.value);
+
+        if (!code) {
+            alert("Please enter some code or text!");
+            return;
+        }
+
+        let payload = { feature, code, language, focus };
+
+        if (feature === "qa" || feature === "codegen") {
+            const extra = prompt("Enter your question or description:");
+            if (!extra) return;
+            payload.extra = extra;
+        }
+
+        if (feature === "translate") {
+            const toLang = prompt("Enter target language (Python, Java, C++, JavaScript):");
+            if (!toLang) return;
+            payload.toLang = toLang;
+        }
+
+        try {
+            const res = await fetch('http://127.0.0.1:5000/feature', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            let resultText = data.result;
+
+            // For review/rewrite/debug/multimodal, append metrics
+            if (["review","rewrite","debug","multimodal"].includes(feature)) {
+                const metricsPrompt = `Analyze this ${language} code and provide:
+1. Time Complexity
+2. Space Complexity
+3. Estimated Memory Usage
+4. Explanation
+
+Original Code:
+${code}
+
+Updated / Corrected Code:
+${resultText}`;
+
+                const metricsRes = await fetch('http://127.0.0.1:5000/feature', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feature: "text", code: metricsPrompt, language })
+                });
+                const metricsData = await metricsRes.json();
+                resultText += "\n\n📊 Code Metrics and Explanation:\n" + metricsData.result;
+            }
+
+            document.getElementById('output').textContent = resultText;
+            hljs.highlightAll();
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ Error communicating with backend: " + err.message);
+        }
+    });
+});
+
+// Speech recognition
+const speechBtn = document.getElementById('speechBtn');
+speechBtn.addEventListener('click', () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("⚠️ Speech Recognition not supported in this browser.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    recognition.start();
+    alert("🎤 Speak now...");
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('inputArea').value += transcript;
+    }
+
+    recognition.onerror = (event) => {
+        alert("❌ Error in speech recognition: " + event.error);
+    }
+});
+</script>
+</body>
+</html>
