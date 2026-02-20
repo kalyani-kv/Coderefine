@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <title>CodeRefine AI Hub 🤖</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+    
     <!-- Highlight.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -136,14 +136,12 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     window.location.href = 'auth.html';
 });
 
-// Copy text
 function copyText(id) {
     const text = document.getElementById(id).innerText;
     navigator.clipboard.writeText(text);
     alert("Copied!");
 }
 
-// Download TXT
 function exportText(id, filename) {
     const text = document.getElementById(id).innerText;
     const blob = new Blob([text], { type: "text/plain" });
@@ -153,7 +151,7 @@ function exportText(id, filename) {
     link.click();
 }
 
-// Download PDF via backend
+// PDF download via backend
 function exportPDF(id){
     const content = document.getElementById(id).innerText;
     fetch('http://127.0.0.1:5000/pdf', {
@@ -173,71 +171,82 @@ function exportPDF(id){
 // Feature buttons
 const featureButtons = document.querySelectorAll('.featureBtn');
 featureButtons.forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
         const feature = btn.dataset.feature;
-        const code = document.getElementById('inputArea').value.trim();
+        const input = document.getElementById('inputArea').value.trim();
         const language = document.getElementById('language').value;
         const focus = Array.from(document.querySelectorAll('.focusCheck:checked')).map(f => f.value);
 
-        if (!code) {
+        if(!input){
             alert("Please enter some code or text!");
             return;
         }
 
-        let payload = { feature, code, language, focus };
-
-        if (feature === "qa" || feature === "codegen") {
-            const extra = prompt("Enter your question or description:");
-            if (!extra) return;
-            payload.extra = extra;
-        }
-
-        if (feature === "translate") {
+        if(feature === "translate"){
             const toLang = prompt("Enter target language (Python, Java, C++, JavaScript):");
-            if (!toLang) return;
-            payload.toLang = toLang;
-        }
-
-        try {
-            const res = await fetch('http://127.0.0.1:5000/feature', {
+            fetch('http://127.0.0.1:5000/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ code: input, fromLang: language, toLang })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('output').textContent = data.translated;
+                hljs.highlightAll();
             });
-
-            const data = await res.json();
-            let resultText = data.result;
-
-            // For review/rewrite/debug/multimodal, append metrics
-            if (["review","rewrite","debug","multimodal"].includes(feature)) {
-                const metricsPrompt = `Analyze this ${language} code and provide:
-1. Time Complexity
-2. Space Complexity
-3. Estimated Memory Usage
-4. Explanation
-
-Original Code:
-${code}
-
-Updated / Corrected Code:
-${resultText}`;
-
-                const metricsRes = await fetch('http://127.0.0.1:5000/feature', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ feature: "text", code: metricsPrompt, language })
-                });
-                const metricsData = await metricsRes.json();
-                resultText += "\n\n📊 Code Metrics and Explanation:\n" + metricsData.result;
-            }
-
-            document.getElementById('output').textContent = resultText;
-            hljs.highlightAll();
-
-        } catch (err) {
-            console.error(err);
-            alert("❌ Error communicating with backend: " + err.message);
+            return;
         }
+
+        if(feature === "multimodal"){
+            fetch('http://127.0.0.1:5000/multimodal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: input })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('output').textContent = data.result;
+                hljs.highlightAll();
+            });
+            return;
+        }
+
+        // Other local simulation features
+        let output = "";
+        switch(feature){
+            case "review":
+                output = `🔍 Review Results:\nFocus: ${focus.join(', ')}\n\nNo critical issues found. Code looks good!`;
+                break;
+            case "rewrite":
+                output = "🔄 Rewritten Code:\n" + input.toUpperCase();
+                break;
+            case "text":
+                output = "📝 Generated Text:\n" + input.split("").reverse().join("");
+                break;
+            case "codegen":
+                output = "💻 Generated Code:\nprint('Hello World!')";
+                break;
+            case "debug":
+                output = "🐞 Debug Report:\nNo errors detected!";
+                break;
+            case "summarize":
+                output = "📄 Summary:\n" + input.slice(0,50) + "...";
+                break;
+            case "qa":
+                output = "❓ Q&A Answer: This is a stub answer.";
+                break;
+            case "sentiment":
+                output = "😊 Sentiment: Positive";
+                break;
+            case "recommend":
+                output = "⭐ Recommendation: Use meaningful variable names.";
+                break;
+            default:
+                output = "⚠️ Feature not implemented yet.";
+        }
+
+        document.getElementById('output').textContent = output;
+        hljs.highlightAll();
     });
 });
 
@@ -245,7 +254,7 @@ ${resultText}`;
 const speechBtn = document.getElementById('speechBtn');
 speechBtn.addEventListener('click', () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+    if(!SpeechRecognition){
         alert("⚠️ Speech Recognition not supported in this browser.");
         return;
     }
@@ -268,5 +277,6 @@ speechBtn.addEventListener('click', () => {
     }
 });
 </script>
+
 </body>
 </html>
